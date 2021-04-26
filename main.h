@@ -5,6 +5,7 @@
 #include <iostream>
 #include <Windows.h>
 #include <fstream>
+#include <cmath>
 using namespace std;
 
 #define RUS_ENCODING 1251
