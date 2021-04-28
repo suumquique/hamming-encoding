@@ -32,7 +32,7 @@ int main(void) {
 
 	cout << "\nРазмер файла в битах после кодирования равен " << getFileLength(fileToDecode) << endl << endl;
 
-	cout << "Введите путь к файлу, который требуется декодировать и исправить возможные ошибки методом Хемминга: ";
+	cout << "Введите путь к файлу, в который будет записана декодированная информация: ";
 	cin >> fileForDecodedInformationPath;
 	dwRetCode = decode(fileToDecode, blockSize, fileForDecodedInformation);
 	if (dwRetCode != ERROR_SUCCESS) {
