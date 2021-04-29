@@ -5,8 +5,11 @@
 поток этого файла, открытый на чтение (дл€ последующего декодировани€).*/
 fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
 	size_t bitsInInputFile = getFileLength(binaryFileToEncode); //  оличество бит в кодируемом файле
+	size_t fullBlocksInInputFile = bitsInInputFile / blockSize; //  оличество целых блоков в кодируемом файле
 	//  оличество значащих бит в последнем блоке (если не поделилось нацело)
-	unsigned char residualBitsNumber = getEncodedBlockLength(bitsInInputFile % blockSize);
+	unsigned char residualBitsNumber = bitsInInputFile % blockSize;
+	//  оличество значащих бит в последнем закодированном блоке (если не поделилось нацело)
+	unsigned char residualEncodedBitsNumber = getEncodedBlockLength(residualBitsNumber);
 	bitset<MAX_BLOCK_LENGTH> currentBitset; // “екущий битсет дл€ записи блока
 	vector<byte> currentEncodedBlock; // “екущий массив байт дл€ записи в файл
 
@@ -24,15 +27,22 @@ fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
 	}
 	/* ¬ первом байте файла сохран€етс€ число, показывающее количество значащих бит в последнем блоке,
 	чтобы при декодировании его можно было корректно интерпретировать */
-	outputFile << (byte) residualBitsNumber;
+	outputFile << (byte) residualEncodedBitsNumber;
 
-
-	while (!binaryFileToEncode.eof()) {
+	// «аписываем закодированную информацию поблочно в файл
+	for (size_t i = 0; i < fullBlocksInInputFile; i++) {
 		currentBitset = readBlock(binaryFileToEncode, blockSize);
 		currentEncodedBlock = encodeBlock(currentBitset, blockSize);
 		// «аписываем вектор (массив байт) в выходной файл
 		outputFile.write((const char*) currentEncodedBlock.data(), currentEncodedBlock.size());
 	}
+	// ≈сли осталс€ в конце один неполный блок, кодируем остаток и так же записываем его в файл
+	if (residualBitsNumber != 0) {
+		currentBitset = readBlock(binaryFileToEncode, residualBitsNumber);
+		currentEncodedBlock = encodeBlock(currentBitset, residualBitsNumber);
+		outputFile.write((const char*)currentEncodedBlock.data(), currentEncodedBlock.size());
+	}
+
 	outputFile.close();
 
 	// ¬озвращаемый открытый на чтение в двоичном формате файл, куда записано закодированное сообщение
@@ -84,6 +94,9 @@ vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBit
 			}
 		}
 	}
+
+	cout << block << endl;
+	cout << encodedBlock << endl << endl;
 
 	// «аполн€ем массив байтов, преобразу€ в них текущий битсет (блок) с закодированной информаией
 	for (size_t currentByteIndex = 0; currentByteIndex < encodedBytesNumber; currentByteIndex++) {

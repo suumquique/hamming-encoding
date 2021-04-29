@@ -58,9 +58,11 @@ bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeI
 	}
 
 	// Читаем из файла, пока номер текущего бита меньше, чем размер блока (мы еще не полностью заполнили блок)
-	while (!binaryInputFile.eof()) {
-		// Считываем один байт и конвертируем его в битсет из восьми бит
+	while (true) {
 		binaryInputFile.read((char*)&temp, sizeof(temp));
+		/* Поскольку флаг eof устанавливается исключительно в том случае, когда уже произошла попытка чтения за границей файла,
+		* мы проверяем границу фойла после считывания, а цикл идет while(true) */
+		if (binaryInputFile.eof()) return currentBlock;
 		tempByte = bitset<8>(temp);
 
 		// Читаем текущий байт побитово
@@ -79,6 +81,8 @@ bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeI
 				return currentBlock;
 			}
 		}
+
+		
 
 		if (currentBitNumber == blockSizeInBites) return currentBlock;
 	}
