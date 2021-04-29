@@ -16,24 +16,87 @@ DWORD decode(fstream& binaryFileToDecode, unsigned blockSize, string fileForDeco
 	unsigned char residualBlockSize; // Размер незакодированного остаточного блока в битах (если он есть)
 	// Считываем первый байт файла, в котором лежит размер остаточного блока в битах
 	binaryFileToDecode.read((char*)&residualBlockSize, sizeof(residualBlockSize)); 
-	// Размер закодированного остаточного блока в битах (если он есть)
+	// Размер закодированного остатка в битах
 	unsigned char residualEncodedBlockSize = getEncodedBlockLength(residualBlockSize);
+	// Размер закодированного остаточного блока в файле целых байтах, переведенный в биты
+	unsigned char residualEncodedBlockInFileSize = getIntegerBlockSizeInBytes(residualEncodedBlockSize) * BITS_IN_BYTE;
 	size_t encodedBlockLength = getEncodedBlockLength(blockSize); // Размер закодированного блока в битах
 	// Размер одного закодированного блока в файле в битах (поскольку один блок лежит в целом количестве байт)
-	size_t fullBlockSizeInBites = ceil((double)encodedBlockLength / BITS_IN_BYTE) * BITS_IN_BYTE;
+	size_t fullBlockSizeInBites = getIntegerBlockSizeInBytes(encodedBlockLength) * BITS_IN_BYTE;
 	// Количество целых блоков в закодированном файле
 	size_t fullBlockInEncodedFileNumber = significantBitsInEncodedFileNumber / fullBlockSizeInBites;
 	// Текущий битсет для записи блока из файла и текущий декодированный (восстановленный) блок
 	bitset<MAX_BLOCK_LENGTH> currentBitset, currentDecodedBlock;
+	vector<byte> decodedInformation; // Декодированная информация, записанная побайтово
 	
 	for (size_t i = 0; i < fullBlockInEncodedFileNumber; i++) {
 		currentBitset = readBlock(binaryFileToDecode, fullBlockSizeInBites);
 		currentDecodedBlock = decodeAndRestoreBlock(currentBitset, encodedBlockLength);
+		decodedInformation = convertDecodedBlockAndAddToByteArray(currentDecodedBlock, blockSize, decodedInformation);
 	}
+	// Если есть остаток, отдельно работаем с ним
+	if (residualBlockSize) {
+		currentBitset = readBlock(binaryFileToDecode, residualEncodedBlockInFileSize);
+		currentDecodedBlock = decodeAndRestoreBlock(currentBitset, residualEncodedBlockSize);
+		decodedInformation = convertDecodedBlockAndAddToByteArray(currentDecodedBlock, residualBlockSize, decodedInformation, TRUE);
+	}
+
+	fileForDecodedInformation.write((const char*)decodedInformation.data(), decodedInformation.size());
 	
 	return ERROR_SUCCESS;
 }
 
+/* Преобразует текущий блок (битсет) в массив байтов и добавляет его к текущему вектору, содержащему биты.
+* Если размер блока не кратен восьми и невозможно полностью поместить его в байты, от него остается остаток, 
+* который добавляется к следующему блоку */
+vector<byte> convertDecodedBlockAndAddToByteArray(bitset<MAX_BLOCK_LENGTH> decodedBlock, unsigned blockSizeInBites, vector<byte> currentVector, BOOL end) {
+	// Статическая переменная для оставшихся бит, если размер блока не кратен восьми
+	static bitset<BITS_IN_BYTE> residualBits;
+	// Количество оставшихся с прошлого вызова функции бит
+	static size_t residualBitsCount = 0;
+
+	size_t currentBitIndex = 0; // Номер текущего бита из блока
+	size_t currentTempBitIndex = 0; // Номер текущего бита для заполнения байта (от 0 до 7)
+	bitset<BITS_IN_BYTE> tempBitsetByte; // Временное хранилище для байта в битовом представлении
+
+	
+
+	// Пока есть остаточные биты с прошлого блока, заполняем текущий временный битсет на 8 бит (байт) ими
+	for (currentTempBitIndex = 0; currentTempBitIndex < residualBitsCount; currentTempBitIndex++) {
+		tempBitsetByte[currentTempBitIndex] = residualBits[currentTempBitIndex];
+		residualBits[currentTempBitIndex] = 0;
+	}
+	residualBitsCount = 0;
+
+	// Читаем текущий блок побитово
+	for (currentBitIndex = 0; currentBitIndex < blockSizeInBites; currentBitIndex++) {
+		// Побитово заполняем текущий байт
+		tempBitsetByte[currentTempBitIndex++] = decodedBlock[currentBitIndex];
+
+		if (currentTempBitIndex == BITS_IN_BYTE) {
+			// Преобразуем текущий заполненный битсет в байт и добавляем в конец массива
+			currentVector.push_back(static_cast<byte>(tempBitsetByte.to_ulong()));
+			// Зануляем текущий временный индекс, чтобы начать заполнение нового битсета на восемь бит
+			currentTempBitIndex = 0;
+		}
+	}
+
+	// Если есть остаток, то добавляем вносим его в статическую переменную до следующего запуска программы
+	if (currentTempBitIndex > 1) {
+		residualBitsCount = currentTempBitIndex;
+		residualBits = tempBitsetByte;
+	}
+
+	// Если работа с текущим сообщением окончена, очищаем остатки
+	if (end) {
+		residualBits.reset();
+		residualBitsCount = 0;
+	}
+
+	return currentVector;
+}
+
+// Декодирует блок, исправляет одиночную ошибку, если таковая имеется. Возвращает декодированный блок без контрольных бит
 bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedBlock, unsigned encodedBlockSize) {
 	bitset<MAX_BLOCK_LENGTH> decodedBlock; // Декодированный блок без контрольных бит
 	size_t currentBitIndex; // Индекс текущего бита в битсете

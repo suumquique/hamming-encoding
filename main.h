@@ -19,12 +19,14 @@ using namespace std;
 #define NO_ERROR_BITS UINT_MAX
 
 size_t getFileLength(fstream& file);
-fstream encode(fstream& binaryFileToEncode, unsigned blockSize);
+DWORD encode(fstream& binaryFileToEncode, unsigned blockSize, string fileForEncodedInformationPath);
 DWORD decode(fstream& binaryFileToDecode, unsigned blockSize, string fileForDecodedInformationPath);
 size_t getEncodedBlockLength(unsigned blockSize);
 bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeInBites);
 vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBites);
 bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedBlock, unsigned encodedBlockSize);
+vector<byte> convertDecodedBlockAndAddToByteArray(bitset<MAX_BLOCK_LENGTH> decodedBlock, unsigned blockSizeInBites, vector<byte> currentVector, BOOL end=FALSE);
 BOOL isIndexPowerOfTwo(size_t index);
+size_t getIntegerBlockSizeInBytes(size_t blockSizeInBites);
 
 #endif // !MAIN_H

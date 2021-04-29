@@ -82,7 +82,7 @@ bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeI
 			}
 		}
 
-		
+
 
 		if (currentBitNumber == blockSizeInBites) return currentBlock;
 	}
@@ -92,8 +92,14 @@ bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeI
 	residualBitsCount = 0;
 }
 
+
 /*Определяем, является ли число степенью двойки, через логарифм - если логарифм является целым числом, то это степень.
 Прибавлять единицу надо, поскольку отсчет элементов идёт с нуля, а номера элементов - с единицы. */
 BOOL isIndexPowerOfTwo(size_t index) {
 	return log2(index + 1) == (double)(int)log2(index + 1);
+}
+
+// Возвращает целое число байт, в которое поместится блок, состоящий из определенного первым аргументом количества бит
+size_t getIntegerBlockSizeInBytes(size_t blockSizeInBites) {
+	return ceil((double)blockSizeInBites / BITS_IN_BYTE);
 }
