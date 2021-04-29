@@ -8,8 +8,6 @@ fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
 	size_t fullBlocksInInputFile = bitsInInputFile / blockSize; // Количество целых блоков в кодируемом файле
 	// Количество значащих бит в последнем блоке (если не поделилось нацело)
 	unsigned char residualBitsNumber = bitsInInputFile % blockSize;
-	// Количество значащих бит в последнем закодированном блоке (если не поделилось нацело)
-	unsigned char residualEncodedBitsNumber = getEncodedBlockLength(residualBitsNumber);
 	bitset<MAX_BLOCK_LENGTH> currentBitset; // Текущий битсет для записи блока
 	vector<byte> currentEncodedBlock; // Текущий массив байт для записи в файл
 
@@ -27,7 +25,7 @@ fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
 	}
 	/* В первом байте файла сохраняется число, показывающее количество значащих бит в последнем блоке,
 	чтобы при декодировании его можно было корректно интерпретировать */
-	outputFile << (byte) residualEncodedBitsNumber;
+	outputFile << (byte)residualBitsNumber;
 
 	// Записываем закодированную информацию поблочно в файл
 	for (size_t i = 0; i < fullBlocksInInputFile; i++) {
@@ -63,11 +61,8 @@ vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBit
 	vector<byte> encodedBytes; // Массив байт, которые будут записаны в файл
 
 	for (size_t i = 0; i < blockSizeInBites; i++) {
-		/* Если текущий номер является степенью двойки, то зануляем его, потому что это контрольный бит.
-		* Определяем, является ли число степенью двойки, через логарифм - если логарифм является целым числом, то это степень.
-		* Прибавлять единицу надо, поскольку отсчет элементов идёт с нуля, а номера элементов - с единицы.
-		while вместо if используется по той причине, что могут быть два таких бита подряд (под номером 1 и номером 2)*/
-		while (log2(currentBitIndex + 1) == (double)(int)log2(currentBitIndex + 1)) {
+		// Если текущий номер является степенью двойки, то зануляем его, потому что это контрольный бит.
+		while (isIndexPowerOfTwo(currentBitIndex)) {
 			encodedBlock[currentBitIndex++] = 0;
 		}
 
@@ -90,13 +85,10 @@ vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBit
 		for (size_t i = currentBitIndex; i < encodedBlockLength; i += ((currentBitNumber) * 2)) {
 			for (size_t k = i; k < i + currentBitNumber; k++) {
 				// Считаем четность с помощью операции xor, поскольку нулевые биты не должны влиять на четность
-				encodedBlock[currentBitIndex] = encodedBlock[currentBitIndex] ^ encodedBlock[k];
+				if (k != currentBitIndex) encodedBlock[currentBitIndex] = encodedBlock[currentBitIndex] ^ encodedBlock[k];
 			}
 		}
 	}
-
-	cout << block << endl;
-	cout << encodedBlock << endl << endl;
 
 	// Заполняем массив байтов, преобразуя в них текущий битсет (блок) с закодированной информаией
 	for (size_t currentByteIndex = 0; currentByteIndex < encodedBytesNumber; currentByteIndex++) {
