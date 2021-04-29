@@ -91,3 +91,9 @@ bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeI
 	residualBits.reset();
 	residualBitsCount = 0;
 }
+
+/*Определяем, является ли число степенью двойки, через логарифм - если логарифм является целым числом, то это степень.
+Прибавлять единицу надо, поскольку отсчет элементов идёт с нуля, а номера элементов - с единицы. */
+BOOL isIndexPowerOfTwo(size_t index) {
+	return log2(index + 1) == (double)(int)log2(index + 1);
+}
