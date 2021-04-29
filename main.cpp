@@ -6,6 +6,7 @@ int main(void) {
 
 	string fileToEncodePath; // Путь к файлу, информация из которого будет закодирована методом Хемминга
 	string fileForDecodedInformationPath; // Путь к файлу, куда будем записывать декодированную информацию
+	string fileForEncodedInformationPath; // Путь к файлу, куда будем записывать закдированную информацию
 	fstream fileToEncode; // Файл, информацию из которого будем кодировать
 	fstream fileToDecode; // Файл, где уже лежит закодированная и, возможно, поврежденная информация
 	fstream fileForDecodedInformation; // Файл для записи декодированной информации с исправленными методом Хемминга ошибками
@@ -28,8 +29,18 @@ int main(void) {
 
 	cout << "\nРазмер файла в битах до кодирования равен " << getFileLength(fileToEncode) << endl << endl;
 
-	fileToDecode = encode(fileToEncode, blockSize);
+	cout << "Введите путь к файлу, куда будет записана закодированная информация: ";
+	cin >> fileForEncodedInformationPath;
+	dwRetCode = encode(fileToEncode, blockSize, fileForEncodedInformationPath);
+	if (dwRetCode != ERROR_SUCCESS) {
+		cout << "Ошибка при кодировании файла.";
+		exit(ERROR_ENCRYPTION_FAILED);
+	}
 
+	cout << "Измените биты в получившемся файле для проверки работоспобности алгоритма. " << endl;
+	system("pause");
+
+	fileToDecode.open(fileForEncodedInformationPath, ios::in || ios::binary);
 	cout << "\nРазмер файла в битах после кодирования равен " << getFileLength(fileToDecode) << endl << endl;
 
 	cout << "Введите путь к файлу, в который будет записана декодированная информация: ";

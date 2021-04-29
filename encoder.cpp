@@ -1,31 +1,26 @@
 #include "main.h"
 
 /*Функция считывает переданный ей файл в двоичном формате, кодирует его методом Хемминга поблочно (размер
-блока передает вторым аргументом), записывает получившуюся битовую последовательность в файл и возвращает
-поток этого файла, открытый на чтение (для последующего декодирования).*/
-fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
+блока передает вторым аргументом), записывает получившуюся битовую последовательность в файл и возвращает статус выполнения.*/
+DWORD encode(fstream& binaryFileToEncode, unsigned blockSize, string fileForEncodedInformationPath) {
 	size_t bitsInInputFile = getFileLength(binaryFileToEncode); // Количество бит в кодируемом файле
 	size_t fullBlocksInInputFile = bitsInInputFile / blockSize; // Количество целых блоков в кодируемом файле
 	// Количество значащих бит в последнем блоке (если не поделилось нацело)
 	unsigned char residualBitsNumber = bitsInInputFile % blockSize;
 	bitset<MAX_BLOCK_LENGTH> currentBitset; // Текущий битсет для записи блока
 	vector<byte> currentEncodedBlock; // Текущий массив байт для записи в файл
+	ofstream outputFile; // Файл, куда будет записано закодированное сообщение и служебная информация
 
-	string outputFilePath; // Путь к файлу, куда будет записано закодированное сообщение
-	ofstream outputFile; // Файл, куда будет записано закодированное сообщение и служебная информацияz
-
-	cout << "Введите путь к файлу, куда будет записана закодированная информация: ";
-	cin >> outputFilePath;
 	// Открываем файл, куда будет записано закодированное сообщение, на запись в двоичном виде
-	outputFile.open(outputFilePath, ios_base::binary);
+	outputFile.open(fileForEncodedInformationPath, ios_base::binary);
 	if (!outputFile.is_open()) {
 		cout << "Невозможно создать временный файл для записи закодированного сообщения, у программы нет разрешения для создания\
-			файлов в данной директории";
-		exit(ERROR_FILE_INVALID);
+			файлов в данной директории" << endl;
+		return ERROR_FILE_INVALID;
 	}
 	/* В первом байте файла сохраняется число, показывающее количество значащих бит в последнем блоке,
 	чтобы при декодировании его можно было корректно интерпретировать */
-	outputFile << (byte)residualBitsNumber;
+	outputFile << (byte) residualBitsNumber;
 
 	// Записываем закодированную информацию поблочно в файл
 	for (size_t i = 0; i < fullBlocksInInputFile; i++) {
@@ -40,12 +35,9 @@ fstream encode(fstream& binaryFileToEncode, unsigned blockSize) {
 		currentEncodedBlock = encodeBlock(currentBitset, residualBitsNumber);
 		outputFile.write((const char*)currentEncodedBlock.data(), currentEncodedBlock.size());
 	}
-
 	outputFile.close();
-
-	// Возвращаемый открытый на чтение в двоичном формате файл, куда записано закодированное сообщение
-	fstream encodedFile(outputFilePath, ios_base::in || ios_base::binary);
-	return encodedFile;
+	
+	return ERROR_SUCCESS;
 }
 
 /* Аргумент "block" - массив бит, содержащий в себе считанный из файла битовый блок
@@ -57,7 +49,7 @@ vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBit
 	size_t encodedBlockLength = getEncodedBlockLength(blockSizeInBites); // Размер блока с контрольными и информационными битами
 	unsigned currentBitIndex = 0; // Индекс текущего бита  в битсете (начинается с нуля)
 	bitset<MAX_BLOCK_LENGTH> encodedBlock; // Блок с добавленными контрольными битами
-	size_t encodedBytesNumber = ceil((double)encodedBlockLength / BITS_IN_BYTE); // Количество целых байт в закодированном блоке
+	size_t encodedBytesNumber = getIntegerBlockSizeInBytes(encodedBlockLength); // Количество целых байт в закодированном блоке
 	vector<byte> encodedBytes; // Массив байт, которые будут записаны в файл
 
 	for (size_t i = 0; i < blockSizeInBites; i++) {
