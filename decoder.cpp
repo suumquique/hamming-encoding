@@ -99,6 +99,7 @@ vector<byte> convertDecodedBlockAndAddToByteArray(bitset<MAX_BLOCK_LENGTH> decod
 // ƒекодирует блок, исправл€ет одиночную ошибку, если такова€ имеетс€. ¬озвращает декодированный блок без контрольных бит
 bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedBlock, unsigned encodedBlockSize) {
 	bitset<MAX_BLOCK_LENGTH> decodedBlock; // ƒекодированный блок без контрольных бит
+	string stringBlock; // Ѕитсет (блок) в строковом представлении
 	size_t currentBitIndex; // »ндекс текущего бита в битсете
 	size_t errorBitPosition = NO_ERROR_BITS; // Ќомер ошибочного бита, который требуетс€ инвертировать. ѕо умолчанию такого бита нет
 	bool currentControlBit = 0; // “екущий контрольный бит, который мы провер€ем
@@ -125,6 +126,9 @@ bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedB
 
 	// ≈сли нашелс€ ошибочный бит
 	if (errorBitPosition != NO_ERROR_BITS) {
+		stringBlock = encodedBlock.to_string();
+		cout << "»справлен " << errorBitPosition << " бит в текущем блоке (вид до исправлени€): "
+			<< stringBlock.substr(stringBlock.size() - encodedBlockSize) << endl;
 		// ¬ычитаем единицу, потому что мы должны будем брать бит по индексу, а позици€ у нас выступает в качестве номера
 		errorBitPosition--;
 		encodedBlock.flip(errorBitPosition); // »нвертируем ошибочный бит
