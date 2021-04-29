@@ -34,7 +34,7 @@ int main(void) {
 
 	cout << "Введите путь к файлу, в который будет записана декодированная информация: ";
 	cin >> fileForDecodedInformationPath;
-	dwRetCode = decode(fileToDecode, blockSize, fileForDecodedInformation);
+	dwRetCode = decode(fileToDecode, blockSize, fileForDecodedInformationPath);
 	if (dwRetCode != ERROR_SUCCESS) {
 		cout << "Ошибка при декодировании.";
 		exit(ERROR_DECRYPTION_FAILED);

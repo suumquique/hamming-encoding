@@ -18,7 +18,7 @@ using namespace std;
 
 size_t getFileLength(fstream& file);
 fstream encode(fstream& binaryFileToEncode, unsigned blockSize);
-DWORD decode(fstream& binaryFileToDecode, unsigned blockSize, fstream& fileWithDecodedInformation);
+DWORD decode(fstream& binaryFileToDecode, unsigned blockSize, string fileForDecodedInformationPath);
 size_t getEncodedBlockLength(unsigned blockSize);
 bitset<MAX_BLOCK_LENGTH> readBlock(fstream& binaryInputFile, unsigned blockSizeInBites);
 vector<byte> encodeBlock(bitset<MAX_BLOCK_LENGTH> block, unsigned blockSizeInBites);
