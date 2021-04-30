@@ -108,7 +108,7 @@ bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedB
 	for (unsigned currentBitNumber = 1; currentBitNumber < encodedBlockSize + 1; currentBitNumber *= 2) {
 		currentBitIndex = currentBitNumber - 1;
 		for (size_t i = currentBitIndex; i < encodedBlockSize; i += ((currentBitNumber) * 2)) {
-			for (size_t k = i; k < i + currentBitNumber; k++) {
+			for (size_t k = i; k < i + currentBitNumber && k < encodedBlockSize; k++) {
 				// —читаем четность с помощью операции xor, поскольку нулевые биты не должны вли€ть на четность
 				if (k != currentBitIndex) currentControlBit ^= encodedBlock[k];
 			}
@@ -127,11 +127,13 @@ bitset<MAX_BLOCK_LENGTH> decodeAndRestoreBlock(bitset<MAX_BLOCK_LENGTH> encodedB
 	// ≈сли нашелс€ ошибочный бит
 	if (errorBitPosition != NO_ERROR_BITS) {
 		stringBlock = encodedBlock.to_string();
-		cout << "»справлен " << errorBitPosition << " бит в текущем блоке (вид до исправлени€): "
-			<< stringBlock.substr(stringBlock.size() - encodedBlockSize) << endl;
+		cout << "»справлен " << errorBitPosition << " бит в текущем блоке (вид до исправлени€ | вид после исправлени€): "
+			<< stringBlock.substr(stringBlock.size() - encodedBlockSize) << " | ";
 		// ¬ычитаем единицу, потому что мы должны будем брать бит по индексу, а позици€ у нас выступает в качестве номера
 		errorBitPosition--;
 		encodedBlock.flip(errorBitPosition); // »нвертируем ошибочный бит
+		stringBlock = encodedBlock.to_string();
+		cout << stringBlock.substr(stringBlock.size() - encodedBlockSize) << endl;
 	}
 
 	// ѕереносим в декодированный блок все информационные биты из закодированного
