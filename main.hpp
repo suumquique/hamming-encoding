@@ -13,9 +13,9 @@ using namespace std;
 
 #define RUS_ENCODING 1251
 #define BITS_IN_BYTE 8
-// Максимальная длина блока, содержащего контрольные и информационные биты
+// ћаксимальна¤ длина блока, содержащего контрольные и информационные биты
 #define MAX_BLOCK_LENGTH 270
-// Костанта, показывающая, что ошибочных битов нет
+//  останта, показывающа¤, что ошибочных битов нет
 #define NO_ERROR_BITS UINT_MAX
 
 size_t getFileLength(fstream& file);
