@@ -1,4 +1,4 @@
-#include "main.h"
+#include "main.hpp"
 
 int main(void) {
 	SetConsoleCP(RUS_ENCODING);
